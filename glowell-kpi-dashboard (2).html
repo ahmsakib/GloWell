@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GloWell — KPI Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --moss:     #7a9e5c;
+  --moss-dk:  #56733f;
+  --moss-dkr: #3a4f2a;
+  --moss-lt:  #a8c482;
+  --moss-pal: #d4e8bc;
+  --cream:    #fafaf6;
+  --tan:      #e6d9b7;
+  --sage:     #96a48b;
+  --forest:   #0d3316;
+  --blush:    #c99a7a;
+  --burgundy: #7a1030;
+
+  --bg:       var(--moss);
+  --card:     var(--cream);
+  --border:   rgba(58,79,42,0.15);
+  --border-med: rgba(58,79,42,0.25);
+  --text:     #1a1f12;
+  --text2:    #2c3620;
+  --muted:    #5c6b48;
+  --good:     var(--forest);
+  --warn:     #7a5a10;
+  --bad:      var(--burgundy);
+  --good-bg:  #daeeda;
+  --warn-bg:  #f5efd4;
+  --bad-bg:   #f5e0e5;
+  --radius:   12px;
+  --radius-sm:7px;
+  --shadow:   0 1px 6px rgba(42,60,28,0.14);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background: var(--moss); font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; color: var(--text); min-height: 100vh; }
+
+.top-bar { background: var(--moss-dkr); border-bottom: 1px solid rgba(168,196,130,0.2); padding: 0 2.5rem; height: 50px; display: flex; align-items: center; justify-content: space-between; }
+.logo { font-family: 'Playfair Display', serif; font-size: 1.25rem; color: var(--tan); font-weight: 500; letter-spacing: 0.04em; }
+.logo em { font-style: italic; color: var(--blush); }
+.top-meta { font-size: 10px; color: var(--moss-lt); letter-spacing: 0.12em; text-transform: uppercase; }
+
+.hero { background: var(--moss-dk); padding: 3rem 2.5rem 2.5rem; border-bottom: 2px solid rgba(58,79,42,0.5); }
+.hero-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+.hero-eyebrow { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--moss-lt); margin-bottom: 0.6rem; font-weight: 500; }
+.hero-title { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 4vw, 3rem); color: var(--cream); font-weight: 400; line-height: 1.1; margin-bottom: 0.6rem; }
+.hero-title em { font-style: italic; color: var(--tan); }
+.hero-desc { font-size: 13px; color: rgba(212,232,188,0.85); max-width: 520px; line-height: 1.7; }
+.hero-stats { display: flex; gap: 2rem; }
+.hstat { text-align: right; }
+.hstat-val { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--tan); line-height: 1; }
+.hstat-label { font-size: 10px; color: var(--moss-lt); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; }
+
+.nav-bar { background: var(--moss-dkr); border-bottom: 1px solid rgba(168,196,130,0.18); padding: 0 2.5rem; overflow-x: auto; }
+.nav-inner { display: flex; max-width: 1200px; margin: 0 auto; }
+.nav-btn { padding: 13px 17px; border: none; background: transparent; color: rgba(168,196,130,0.65); font-size: 11.5px; font-family: 'Inter', sans-serif; cursor: pointer; white-space: nowrap; font-weight: 500; letter-spacing: 0.02em; border-bottom: 2px solid transparent; transition: all 0.15s; margin-bottom: -1px; }
+.nav-btn:hover { color: var(--moss-lt); }
+.nav-btn.active { color: var(--cream); border-bottom-color: var(--blush); }
+
+.main { max-width: 1200px; margin: 0 auto; padding: 2rem 2.5rem 3rem; }
+
+.section { display: none; animation: fadeIn 0.2s ease; }
+.section.visible { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+
+.section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1.75rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(168,196,130,0.3); }
+.section-badge { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--moss-dkr); background: var(--moss-lt); padding: 4px 13px; border-radius: 99px; font-weight: 600; white-space: nowrap; }
+.section-title { font-family: 'Playfair Display', serif; font-size: 1.45rem; color: var(--cream); font-weight: 400; }
+.section-owner { margin-left: auto; font-size: 11px; color: var(--moss-lt); letter-spacing: 0.04em; background: rgba(168,196,130,0.12); padding: 4px 12px; border-radius: 99px; border: 0.5px solid rgba(168,196,130,0.28); white-space: nowrap; }
+
+.metrics-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+.metric { background: var(--card); border: 0.5px solid rgba(122,158,92,0.2); border-radius: var(--radius-sm); padding: 16px 18px 14px; box-shadow: var(--shadow); }
+.metric-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.metric-value { font-size: 1.55rem; font-weight: 600; line-height: 1; margin-bottom: 4px; color: var(--text); }
+.metric-value.good { color: var(--good); }
+.metric-value.warn { color: var(--warn); }
+.metric-value.bad  { color: var(--bad); }
+.metric-sub { font-size: 11px; color: var(--muted); }
+.metric-tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-top: 5px; }
+.tag-good { background: var(--good-bg); color: var(--forest); }
+.tag-warn { background: var(--warn-bg); color: #7a5a10; }
+.tag-bad  { background: var(--bad-bg);  color: var(--burgundy); }
+
+.chart-card { background: var(--card); border: 0.5px solid rgba(122,158,92,0.2); border-radius: var(--radius); padding: 1.5rem 1.75rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+.chart-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.chart-def { font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 1rem; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 12px; font-size: 11px; color: var(--muted); }
+.legend span { display: flex; align-items: center; gap: 5px; }
+.leg { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+
+.data-table-wrap { overflow-x: auto; margin-top: 0.75rem; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th { background: #f0ece0; color: var(--muted); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; font-size: 10px; padding: 9px 14px; text-align: left; border-bottom: 1px solid rgba(122,158,92,0.25); white-space: nowrap; }
+.data-table td { padding: 10px 14px; border-bottom: 0.5px solid rgba(122,158,92,0.12); color: var(--text2); vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: #f6f9f0; }
+.td-m { font-weight: 600; color: var(--text); }
+.td-g { color: var(--forest); font-weight: 600; }
+.td-w { color: #7a5a10; font-weight: 600; }
+.td-b { color: var(--burgundy); font-weight: 600; }
+
+.insight-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-top: 0.75rem; }
+.insight-box { padding: 14px 16px; border-radius: var(--radius-sm); font-size: 12px; line-height: 1.65; color: var(--text2); }
+.insight-box.obs { background: #eef5e6; border-left: 3px solid var(--moss-dk); }
+.insight-box.dec { background: #e8f0e0; border-left: 3px solid var(--forest); }
+.box-label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+
+.divider { border: none; border-top: 1px solid rgba(168,196,130,0.25); margin: 2.5rem 0; }
+footer { background: var(--moss-dkr); text-align: center; padding: 1.5rem; font-size: 10px; color: rgba(212,232,188,0.5); letter-spacing: 0.1em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+<header class="top-bar">
+  <div class="logo">glo<em>well</em></div>
+  <div class="top-meta">KPI Performance Report &nbsp;·&nbsp; Three-Event Summary</div>
+</header>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-left">
+      <p class="hero-eyebrow">Baldrige-Aligned Performance Dashboard</p>
+      <h1 class="hero-title">Results <em>Overview</em></h1>
+      <p class="hero-desc">Comprehensive KPI tracking across product, customer, workforce, leadership, and financial results across GloWell's three pop-up selling events.</p>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><div class="hstat-val">10</div><div class="hstat-label">KPIs Tracked</div></div>
+      <div class="hstat"><div class="hstat-val">3</div><div class="hstat-label">Events</div></div>
+      <div class="hstat"><div class="hstat-val">6</div><div class="hstat-label">Departments</div></div>
+    </div>
+  </div>
+</div>
+
+<nav class="nav-bar">
+  <div class="nav-inner">
+    <button class="nav-btn active" data-section="all">All Sections</button>
+    <button class="nav-btn" data-section="coo">7.1 · Product &amp; Process (COO)</button>
+    <button class="nav-btn" data-section="cmo">7.2 · Customer (CMO)</button>
+    <button class="nav-btn" data-section="chro">7.3 · Workforce (CHRO)</button>
+    <button class="nav-btn" data-section="ceo">7.4 · Leadership (CEO)</button>
+    <button class="nav-btn" data-section="cfo">7.5 · Financial (CTO &amp; CFO)</button>
+    <button class="nav-btn" data-section="cso">7.5 · Strategy (CSO)</button>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- 7.1 COO -->
+<div class="section visible" id="sec-coo">
+  <div class="section-header">
+    <span class="section-badge">7.1</span>
+    <span class="section-title">Product &amp; Process Results</span>
+    <span class="section-owner">COO</span>
+  </div>
+  <div class="metrics-row">
+    <div class="metric"><div class="metric-label">Fulfillment Time — E1</div><div class="metric-value good">30s</div><div class="metric-sub">Target: 1 min</div><span class="metric-tag tag-good">Met Target</span></div>
+    <div class="metric"><div class="metric-label">Fulfillment Time — E2</div><div class="metric-value good">30s</div><div class="metric-sub">Target: 1 min</div><span class="metric-tag tag-good">Met Target</span></div>
+    <div class="metric"><div class="metric-label">Fulfillment Time — E3</div><div class="metric-value good">30s</div><div class="metric-sub">Target: 1 min</div><span class="metric-tag tag-good">Met Target</span></div>
+    <div class="metric"><div class="metric-label">Inventory Turnover — E1</div><div class="metric-value good">2.0×</div><div class="metric-sub">Target: 2.0×</div><span class="metric-tag tag-good">Hit Target</span></div>
+    <div class="metric"><div class="metric-label">Inventory Turnover — E2</div><div class="metric-value bad">0.8×</div><div class="metric-sub">Target: 2.0×</div><span class="metric-tag tag-bad">Missed</span></div>
+    <div class="metric"><div class="metric-label">Inventory Turnover — E3</div><div class="metric-value good">2.9×</div><div class="metric-sub">Target: 2.0×</div><span class="metric-tag tag-good">Exceeded</span></div>
+  </div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Inventory Turnover — All Events vs. 2.0× Target</div>
+      <div class="chart-def">COGS ÷ Average Inventory. Measures efficiency of inventory management during selling periods.</div>
+      <div class="legend"><span><span class="leg" style="background:#7a9e5c"></span>Turnover (actual)</span><span><span class="leg" style="background:#c99a7a;opacity:.8"></span>Target 2.0×</span></div>
+      <div style="position:relative;width:100%;height:220px;"><canvas id="c71" role="img" aria-label="Inventory turnover E1=2.0, E2=0.8, E3=2.9 vs target 2.0"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Order Fulfillment Time — All Events vs. 60s Target</div>
+      <div class="chart-def">Average time from customer order placement to product handoff during pop-up events. Target: 1 minute (60 seconds).</div>
+      <div class="legend"><span><span class="leg" style="background:#0d3316"></span>Fulfillment (seconds)</span><span><span class="leg" style="background:#c99a7a;opacity:.8"></span>Target 60s</span></div>
+      <div style="position:relative;width:100%;height:220px;"><canvas id="c71b" role="img" aria-label="Order fulfillment all events 30s vs 60s target"></canvas></div>
+    </div>
+  </div>
+  <div class="insight-row">
+    <div class="insight-box obs"><div class="box-label">Observation</div>Product was ready for handoff within target at all three events. Order format changed from pre-packaged to customized orders during the project period.</div>
+    <div class="insight-box obs"><div class="box-label">Observation</div>Sold out and hit 2.0× turnover at Event 1. Event 2 underperformed significantly — inventory was held. Event 3 achieved 2.9× after a strategic pricing and inventory decision.</div>
+    <div class="insight-box dec"><div class="box-label">Decision Made</div>Changed from pre-packaged to customized orders. After Event 2, chose not to purchase additional inventory and focused on selling existing stock at reduced prices — resulting in 2.9× turnover at Event 3.</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- 7.2 CMO -->
+<div class="section visible" id="sec-cmo">
+  <div class="section-header">
+    <span class="section-badge">7.2</span>
+    <span class="section-title">Customer Results</span>
+    <span class="section-owner">CMO</span>
+  </div>
+  <div class="metrics-row">
+    <div class="metric"><div class="metric-label">CSAT — Event 1</div><div class="metric-value good">100%</div><div class="metric-sub">Target: 90%</div><span class="metric-tag tag-good">Exceeded</span></div>
+    <div class="metric"><div class="metric-label">CSAT — Event 2</div><div class="metric-value good">90%</div><div class="metric-sub">Target: 90%</div><span class="metric-tag tag-good">Met Target</span></div>
+    <div class="metric"><div class="metric-label">CSAT — Event 3</div><div class="metric-value bad">85.70%</div><div class="metric-sub">Target: 90%</div><span class="metric-tag tag-bad">Below Target</span></div>
+    <div class="metric"><div class="metric-label">NPS — Event 1</div><div class="metric-value good">100%</div><div class="metric-sub">Target: 90%</div><span class="metric-tag tag-good">Exceeded</span></div>
+    <div class="metric"><div class="metric-label">NPS — Event 2</div><div class="metric-value good">90%</div><div class="metric-sub">Target: 90%</div><span class="metric-tag tag-good">Met Target</span></div>
+    <div class="metric"><div class="metric-label">NPS — Event 3</div><div class="metric-value bad">85.75%</div><div class="metric-sub">Target: 90%</div><span class="metric-tag tag-bad">Below Target</span></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">CSAT &amp; NPS — All Events vs. 90% Target</div>
+    <div class="chart-def">CSAT: average post-purchase survey rating evaluating product quality and overall experience. NPS: % promoters minus % detractors. Target: 90% for both.</div>
+    <div class="legend"><span><span class="leg" style="background:#0d3316"></span>CSAT</span><span><span class="leg" style="background:#7a9e5c"></span>NPS</span><span><span class="leg" style="background:#c99a7a;opacity:.8"></span>90% Target</span></div>
+    <div style="position:relative;width:100%;height:260px;"><canvas id="c72" role="img" aria-label="CSAT 100%, 90%, 85.70%. NPS 100%, 90%, 85.75%. Target 90%"></canvas></div>
+  </div>
+  <div class="insight-row">
+    <div class="insight-box obs"><div class="box-label">CSAT Observation</div>Customer satisfaction ended at 85.7%, below the 90% goal, indicating a slight decline over time and a need to improve consistency in the customer experience.</div>
+    <div class="insight-box obs"><div class="box-label">NPS Observation</div>NPS was 85.75% with no detractors but some passives, showing strong loyalty while highlighting the need to convert more customers into active promoters to reach the 90% goal.</div>
+    <div class="insight-box dec"><div class="box-label">Decision Made</div>Implemented strategies to convert passive customers into promoters by improving key touchpoints and strengthening overall engagement and satisfaction.</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- 7.3 CHRO -->
+<div class="section visible" id="sec-chro">
+  <div class="section-header">
+    <span class="section-badge">7.3</span>
+    <span class="section-title">Workforce Results</span>
+    <span class="section-owner">CHRO</span>
+  </div>
+  <div class="metrics-row">
+    <div class="metric"><div class="metric-label">Team Engagement — E1</div><div class="metric-value good">38.70%</div><div class="metric-sub">Target: 30%</div><span class="metric-tag tag-good">Exceeded</span></div>
+    <div class="metric"><div class="metric-label">Team Engagement — E2</div><div class="metric-value bad">22.60%</div><div class="metric-sub">Target: 30%</div><span class="metric-tag tag-bad">Below Target</span></div>
+    <div class="metric"><div class="metric-label">Team Engagement — E3</div><div class="metric-value good">38.70%</div><div class="metric-sub">Target: 30%</div><span class="metric-tag tag-good">Exceeded</span></div>
+    <div class="metric"><div class="metric-label">Attendance Rate — E1</div><div class="metric-value warn">87.23%</div><div class="metric-sub">Target: 95%</div><span class="metric-tag tag-bad">Below Target</span></div>
+    <div class="metric"><div class="metric-label">Attendance Rate — E2</div><div class="metric-value bad">84.70%</div><div class="metric-sub">Target: 95%</div><span class="metric-tag tag-bad">Below Target</span></div>
+    <div class="metric"><div class="metric-label">Attendance Rate — E3</div><div class="metric-value warn">87.23%</div><div class="metric-sub">Target: 95%</div><span class="metric-tag tag-bad">Below Target</span></div>
+  </div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Team Engagement Score — All Events vs. 30% Target</div>
+      <div class="chart-def">Average weekly engagement rating from internal check-in surveys. Calculated as the number of check-in responses and the engagement rating per event period.</div>
+      <div class="legend"><span><span class="leg" style="background:#7a9e5c"></span>Engagement %</span><span><span class="leg" style="background:#c99a7a;opacity:.8"></span>30% Target</span></div>
+      <div style="position:relative;width:100%;height:240px;"><canvas id="c73a" role="img" aria-label="Engagement E1=38.7%, E2=22.6%, E3=38.7% vs target 30%"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Attendance Rate — All Events vs. 95% Target</div>
+      <div class="chart-def">Percentage of all meetings and events attended by team members across each event period. Target: 95%.</div>
+      <div class="legend"><span><span class="leg" style="background:#7a9e5c"></span>Attendance %</span><span><span class="leg" style="background:#c99a7a;opacity:.8"></span>95% Target</span></div>
+      <div style="position:relative;width:100%;height:240px;"><canvas id="c73b" role="img" aria-label="Attendance E1=87.23%, E2=84.70%, E3=87.23% vs target 95%"></canvas></div>
+    </div>
+  </div>
+  <div class="insight-row">
+    <div class="insight-box obs"><div class="box-label">Engagement Observation</div>Engagement dipped to 22.6% at Event 2 before recovering to 38.7% at Event 3, exceeding the 30% target. Calculation reflects number of check-in responses and rating for each event.</div>
+    <div class="insight-box obs"><div class="box-label">Attendance Observation</div>All three events fell below the 95% target. Event 2 had the lowest attendance at 84.70%. Calculation based on members who attended against total meetings held per event period.</div>
+    <div class="insight-box dec"><div class="box-label">Decision Made</div>Tracked how many members attended meetings and events each period. Check-in responses were submitted to monitor and record engagement throughout each event.</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- 7.4 CEO -->
+<div class="section visible" id="sec-ceo">
+  <div class="section-header">
+    <span class="section-badge">7.4</span>
+    <span class="section-title">Leadership &amp; Governance Results</span>
+    <span class="section-owner">CEO</span>
+  </div>
+  <div class="metrics-row">
+    <div class="metric"><div class="metric-label">Initiative Completion — E1</div><div class="metric-value good">100%</div><div class="metric-sub">Target: 90%</div><span class="metric-tag tag-good">Exceeded</span></div>
+    <div class="metric"><div class="metric-label">Initiative Completion — E2</div><div class="metric-value good">95%</div><div class="metric-sub">Target: 90%</div><span class="metric-tag tag-good">Exceeded</span></div>
+    <div class="metric"><div class="metric-label">Initiative Completion — E3</div><div class="metric-value good">92%</div><div class="metric-sub">Target: 90%</div><span class="metric-tag tag-good">Exceeded</span></div>
+    <div class="metric"><div class="metric-label">Decision Stability — E1</div><div class="metric-value good">100%</div><div class="metric-sub">Target: 90%</div><span class="metric-tag tag-good">Exceeded</span></div>
+    <div class="metric"><div class="metric-label">Decision Stability — E2</div><div class="metric-value good">90%</div><div class="metric-sub">Target: 90%</div><span class="metric-tag tag-good">Met Target</span></div>
+    <div class="metric"><div class="metric-label">Decision Stability — E3</div><div class="metric-value bad">85%</div><div class="metric-sub">Target: 90%</div><span class="metric-tag tag-bad">Below Target</span></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Executive Initiative Completion Rate &amp; Decision Stability — All Events vs. 90% Target</div>
+    <div class="chart-def">Initiative Completion: % of executive-led initiatives completed on schedule. Decision Stability: % of leadership decisions not reversed within a two-week period. Target: 90% for both.</div>
+    <div class="legend"><span><span class="leg" style="background:#0d3316"></span>Initiative Completion</span><span><span class="leg" style="background:#7a9e5c"></span>Decision Stability</span><span><span class="leg" style="background:#c99a7a;opacity:.8"></span>90% Target</span></div>
+    <div style="position:relative;width:100%;height:260px;"><canvas id="c74" role="img" aria-label="Initiative completion 100%, 95%, 92%. Decision Stability 100%, 90%, 85%. Target 90%"></canvas></div>
+  </div>
+  <div class="insight-row">
+    <div class="insight-box obs"><div class="box-label">Observation</div>GloWell consistently met or exceeded targets for executive alignment and decision stability. Minor fluctuations in Event 3 were primarily caused by external weather-related event disruptions.</div>
+    <div class="insight-box dec"><div class="box-label">Decision Made</div>The team maintained strong communication and collaboration, proactively adjusting timelines and contingency plans to account for weather-related delays without impacting overall performance.</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- 7.5 CTO/CFO -->
+<div class="section visible" id="sec-cfo">
+  <div class="section-header">
+    <span class="section-badge">7.5 · 1–2</span>
+    <span class="section-title">Financial &amp; Marketplace Results</span>
+    <span class="section-owner">CTO &amp; CFO</span>
+  </div>
+  <div class="metrics-row">
+    <div class="metric"><div class="metric-label">Gross Profit Margin — E1</div><div class="metric-value warn">47.18%</div><div class="metric-sub">Target: 50%</div><span class="metric-tag tag-warn">Near Target</span></div>
+    <div class="metric"><div class="metric-label">Gross Profit Margin — E2</div><div class="metric-value bad">-30.77%</div><div class="metric-sub">Target: 50%</div><span class="metric-tag tag-bad">Missed</span></div>
+    <div class="metric"><div class="metric-label">Gross Profit Margin — E3</div><div class="metric-value good">74.21%</div><div class="metric-sub">Target: 50%</div><span class="metric-tag tag-good">Exceeded</span></div>
+    <div class="metric"><div class="metric-label">Revenue Growth — E1</div><div class="metric-value" style="font-size:1rem;color:var(--muted);padding-top:6px;">N/A</div><div class="metric-sub">No prior baseline</div><span class="metric-tag tag-warn">Baseline</span></div>
+    <div class="metric"><div class="metric-label">Revenue Growth — E2</div><div class="metric-value bad">-42.54%</div><div class="metric-sub">Target: 40%</div><span class="metric-tag tag-bad">Missed</span></div>
+    <div class="metric"><div class="metric-label">Revenue Growth — E3</div><div class="metric-value good">51.20%</div><div class="metric-sub">Target: 40%</div><span class="metric-tag tag-good">Exceeded</span></div>
+  </div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Gross Profit Margin — All Events vs. 50% Target</div>
+      <div class="chart-def">(Revenue − COGS) ÷ Revenue. Indicates core profitability. Target: 50%.</div>
+      <div class="legend"><span><span class="leg" style="background:#0d3316"></span>Gross Profit Margin</span><span><span class="leg" style="background:#c99a7a;opacity:.8"></span>50% Target</span></div>
+      <div style="position:relative;width:100%;height:240px;"><canvas id="c75a" role="img" aria-label="Gross margin E1=47.18%, E2=-30.77%, E3=74.21%, target 50%"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Monthly Revenue Growth Rate — E2 &amp; E3 vs. 40% Target</div>
+      <div class="chart-def">% increase in revenue compared to prior selling period. Event 1 has no prior baseline (N/A). Target: 40%.</div>
+      <div class="legend"><span><span class="leg" style="background:#7a9e5c"></span>Revenue Growth Rate</span><span><span class="leg" style="background:#c99a7a;opacity:.8"></span>40% Target</span></div>
+      <div style="position:relative;width:100%;height:240px;"><canvas id="c75b" role="img" aria-label="Revenue growth E2=-42.54%, E3=51.20%, target 40%"></canvas></div>
+    </div>
+  </div>
+  <div class="insight-row">
+    <div class="insight-box obs"><div class="box-label">Positive Signals</div>Even with volatility, overall profit margin is 30.20%. Event 3 at 74.21% demonstrates the ceiling achievable when strategy and execution align. High margins are possible when operating efficiently.</div>
+    <div class="insight-box obs"><div class="box-label">Negative Signals</div>Profitability is unpredictable — risky for planning and investors. Event 2's -30.77% gross margin and -42.54% revenue decline reveal a significant gap between strategy and execution.</div>
+    <div class="insight-box dec"><div class="box-label">Decision Made</div>Pricing changes were implemented. Focus shifted to selling more at lower price points. New products were introduced to expand revenue channels. Expenses and revenues were tracked throughout.</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- 7.5 CSO -->
+<div class="section visible" id="sec-cso">
+  <div class="section-header">
+    <span class="section-badge">7.5 · 3</span>
+    <span class="section-title">Strategic Overview</span>
+    <span class="section-owner">CSO</span>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Complete KPI Summary — All Measures, All Events</div>
+    <div class="chart-def">Full performance snapshot: every measure, definition, target, and actual result across all three time points.</div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Cat.</th><th>Measure / KPI</th><th>Definition</th><th>Target</th><th>Event 1</th><th>Event 2</th><th>Event 3</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="td-m">7.1</td><td class="td-m">Order Fulfillment Time</td><td>Avg time from order to handoff</td><td>1 min</td><td class="td-g">30s</td><td class="td-g">30s</td><td class="td-g">30s</td><td><span class="metric-tag tag-good">All Met</span></td></tr>
+          <tr><td class="td-m">7.1</td><td class="td-m">Inventory Turnover</td><td>COGS ÷ Avg Inventory</td><td>2.0×</td><td class="td-g">2.0×</td><td class="td-b">0.8×</td><td class="td-g">2.9×</td><td><span class="metric-tag tag-warn">Mixed</span></td></tr>
+          <tr><td class="td-m">7.2</td><td class="td-m">Customer Satisfaction Score</td><td>Avg post-purchase survey rating</td><td>90%</td><td class="td-g">100%</td><td class="td-g">90%</td><td class="td-b">85.70%</td><td><span class="metric-tag tag-warn">Declining</span></td></tr>
+          <tr><td class="td-m">7.2</td><td class="td-m">Net Promoter Score</td><td>% promoters minus % detractors</td><td>90%</td><td class="td-g">100%</td><td class="td-g">90%</td><td class="td-b">85.75%</td><td><span class="metric-tag tag-warn">Declining</span></td></tr>
+          <tr><td class="td-m">7.3</td><td class="td-m">Team Engagement Score</td><td>Avg check-in engagement rating</td><td>30%</td><td class="td-g">38.70%</td><td class="td-b">22.60%</td><td class="td-g">38.70%</td><td><span class="metric-tag tag-warn">Mixed</span></td></tr>
+          <tr><td class="td-m">7.3</td><td class="td-m">Attendance Rate</td><td>% meetings attended by team</td><td>95%</td><td class="td-w">87.23%</td><td class="td-b">84.70%</td><td class="td-w">87.23%</td><td><span class="metric-tag tag-bad">All Missed</span></td></tr>
+          <tr><td class="td-m">7.4</td><td class="td-m">Executive Initiative Completion</td><td>% initiatives completed on schedule</td><td>90%</td><td class="td-g">100%</td><td class="td-g">95%</td><td class="td-g">92%</td><td><span class="metric-tag tag-good">All Met</span></td></tr>
+          <tr><td class="td-m">7.4</td><td class="td-m">Decision Stability</td><td>% decisions not reversed in 2 weeks</td><td>90%</td><td class="td-g">100%</td><td class="td-g">90%</td><td class="td-b">85%</td><td><span class="metric-tag tag-warn">Mixed</span></td></tr>
+          <tr><td class="td-m">7.5</td><td class="td-m">Gross Profit Margin</td><td>(Revenue − COGS) ÷ Revenue</td><td>50%</td><td class="td-w">47.18%</td><td class="td-b">-30.77%</td><td class="td-g">74.21%</td><td><span class="metric-tag tag-warn">Volatile</span></td></tr>
+          <tr><td class="td-m">7.5</td><td class="td-m">Monthly Revenue Growth Rate</td><td>% increase vs. prior selling period</td><td>40%</td><td style="color:var(--muted)">N/A</td><td class="td-b">-42.54%</td><td class="td-g">51.20%</td><td><span class="metric-tag tag-warn">Recovered</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="chart-card" style="margin-top:1rem;">
+    <div class="chart-title">Multi-KPI Radar — Event Performance Comparison (Normalized to Target = 100)</div>
+    <div class="chart-def">Each KPI normalized so 100 = meeting target. Values above 100 exceed target; below 100 miss target. Revenue Growth E1 excluded (no baseline).</div>
+    <div class="legend">
+      <span><span class="leg" style="background:#7a9e5c"></span>Event 1</span>
+      <span><span class="leg" style="background:#7a1030"></span>Event 2</span>
+      <span><span class="leg" style="background:#0d3316"></span>Event 3</span>
+    </div>
+    <div style="position:relative;width:100%;height:360px;"><canvas id="c_radar" role="img" aria-label="Radar comparing Events 1, 2, 3 normalized to target"></canvas></div>
+  </div>
+  <div class="insight-row">
+    <div class="insight-box obs"><div class="box-label">Strategic Observation</div>Events 1 and 3 demonstrate the business's high-ceiling potential. Event 2 was a multi-dimensional shortfall — inventory, sales, margin, and engagement dipped simultaneously, suggesting a cascading execution failure across departments.</div>
+    <div class="insight-box dec"><div class="box-label">Strategic Decision</div>New products were introduced to expand revenue channels. Pricing strategy shifted toward volume at lower price points. Existing inventory was cleared rather than restocked — successfully reversing Event 2's decline at Event 3.</div>
+  </div>
+</div>
+
+</main>
+
+<footer>glowell &nbsp;·&nbsp; KPI Performance Report &nbsp;·&nbsp; Three-Event Summary &nbsp;·&nbsp; Confidential</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const GR = 'rgba(122,158,92,0.15)';
+const TK = '#5c6b48';
+const E  = ['Event 1','Event 2','Event 3'];
+const MOSS   = '#7a9e5c';
+const FOREST = '#0d3316';
+const BURG   = '#7a1030';
+const BLUSH  = '#c99a7a';
+
+function tline(val, n) {
+  return { type:'line', label:'Target', data:Array(n||3).fill(val),
+    borderColor:BLUSH, borderDash:[5,4], borderWidth:1.5, pointRadius:0, fill:false, tension:0 };
+}
+
+new Chart(document.getElementById('c71'), {
+  type:'bar',
+  data:{ labels:E, datasets:[
+    { data:[2,0.8,2.9],
+      backgroundColor:['rgba(122,158,92,0.55)','rgba(122,16,48,0.45)','rgba(13,51,22,0.6)'],
+      borderColor:[MOSS,BURG,FOREST], borderWidth:1.5, borderRadius:5 },
+    tline(2)
+  ]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ y:{beginAtZero:true,max:3.5,grid:{color:GR},ticks:{color:TK,callback:v=>v+'×'}}, x:{grid:{display:false},ticks:{color:TK}} } }
+});
+
+new Chart(document.getElementById('c71b'), {
+  type:'bar',
+  data:{ labels:E, datasets:[
+    { data:[30,30,30], backgroundColor:'rgba(13,51,22,0.5)', borderColor:FOREST, borderWidth:1.5, borderRadius:5 },
+    tline(60)
+  ]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ y:{beginAtZero:true,max:80,grid:{color:GR},ticks:{color:TK,callback:v=>v+'s'}}, x:{grid:{display:false},ticks:{color:TK}} } }
+});
+
+new Chart(document.getElementById('c72'), {
+  type:'line',
+  data:{ labels:E, datasets:[
+    { label:'CSAT', data:[100,90,85.70], borderColor:FOREST, backgroundColor:'rgba(13,51,22,0.06)', fill:true, tension:0.3, pointRadius:5, pointBackgroundColor:FOREST, pointBorderColor:'#fff', pointBorderWidth:2 },
+    { label:'NPS',  data:[100,90,85.75], borderColor:MOSS,   backgroundColor:'rgba(122,158,92,0.06)', fill:false, tension:0.3, pointRadius:5, pointBackgroundColor:MOSS, pointBorderColor:'#fff', pointBorderWidth:2, borderDash:[4,3] },
+    tline(90)
+  ]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ y:{min:70,max:105,grid:{color:GR},ticks:{color:TK,callback:v=>v+'%'}}, x:{grid:{display:false},ticks:{color:TK}} } }
+});
+
+new Chart(document.getElementById('c73a'), {
+  type:'bar',
+  data:{ labels:E, datasets:[
+    { data:[38.70,22.60,38.70],
+      backgroundColor:['rgba(122,158,92,0.55)','rgba(122,16,48,0.45)','rgba(122,158,92,0.55)'],
+      borderColor:[MOSS,BURG,MOSS], borderWidth:1.5, borderRadius:5 },
+    tline(30)
+  ]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ y:{beginAtZero:true,max:50,grid:{color:GR},ticks:{color:TK,callback:v=>v+'%'}}, x:{grid:{display:false},ticks:{color:TK}} } }
+});
+
+new Chart(document.getElementById('c73b'), {
+  type:'bar',
+  data:{ labels:E, datasets:[
+    { data:[87.23,84.70,87.23],
+      backgroundColor:['rgba(122,158,92,0.55)','rgba(122,16,48,0.45)','rgba(122,158,92,0.55)'],
+      borderColor:[MOSS,BURG,MOSS], borderWidth:1.5, borderRadius:5 },
+    tline(95)
+  ]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ y:{min:70,max:100,grid:{color:GR},ticks:{color:TK,callback:v=>v+'%'}}, x:{grid:{display:false},ticks:{color:TK}} } }
+});
+
+new Chart(document.getElementById('c74'), {
+  type:'bar',
+  data:{ labels:E, datasets:[
+    { label:'Initiative Completion', data:[100,95,92], backgroundColor:'rgba(13,51,22,0.5)', borderColor:FOREST, borderWidth:1.5, borderRadius:5 },
+    { label:'Decision Stability',    data:[100,90,85], backgroundColor:'rgba(122,158,92,0.5)', borderColor:MOSS,   borderWidth:1.5, borderRadius:5 },
+    tline(90)
+  ]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ y:{min:70,max:110,grid:{color:GR},ticks:{color:TK,callback:v=>v+'%'}}, x:{grid:{display:false},ticks:{color:TK}} } }
+});
+
+new Chart(document.getElementById('c75a'), {
+  type:'bar',
+  data:{ labels:E, datasets:[
+    { data:[47.18,-30.77,74.21],
+      backgroundColor:['rgba(122,158,92,0.5)','rgba(122,16,48,0.45)','rgba(13,51,22,0.6)'],
+      borderColor:[MOSS,BURG,FOREST], borderWidth:1.5, borderRadius:5 },
+    tline(50)
+  ]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ y:{grid:{color:GR},ticks:{color:TK,callback:v=>v+'%'}}, x:{grid:{display:false},ticks:{color:TK}} } }
+});
+
+new Chart(document.getElementById('c75b'), {
+  type:'bar',
+  data:{ labels:['Event 2','Event 3'], datasets:[
+    { data:[-42.54,51.20],
+      backgroundColor:['rgba(122,16,48,0.45)','rgba(13,51,22,0.6)'],
+      borderColor:[BURG,FOREST], borderWidth:1.5, borderRadius:5 },
+    tline(40,2)
+  ]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ y:{grid:{color:GR},ticks:{color:TK,callback:v=>v+'%'}}, x:{grid:{display:false},ticks:{color:TK}} } }
+});
+
+new Chart(document.getElementById('c_radar'), {
+  type:'radar',
+  data:{
+    labels:['Order Fulfillment','Inventory Turnover','CSAT','NPS','Team Engagement','Attendance','Initiative Completion','Decision Stability','Gross Margin'],
+    datasets:[
+      { label:'Event 1', data:[100,100,111,111,129,91.8,111,111,94.4],
+        borderColor:MOSS, backgroundColor:'rgba(122,158,92,0.1)', pointRadius:3, pointBackgroundColor:MOSS, borderWidth:1.5 },
+      { label:'Event 2', data:[100,40,100,100,75.3,89.2,105.6,100,null],
+        borderColor:BURG, backgroundColor:'rgba(122,16,48,0.07)', pointRadius:3, pointBackgroundColor:BURG, borderDash:[4,3], borderWidth:1.5 },
+      { label:'Event 3', data:[100,145,95.2,95.3,129,91.8,102.2,94.4,148.4],
+        borderColor:FOREST, backgroundColor:'rgba(13,51,22,0.1)', pointRadius:3, pointBackgroundColor:FOREST, borderWidth:2 }
+    ]
+  },
+  options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ labels:{ color:TK, font:{size:11}, boxWidth:10, padding:16 } } },
+    scales:{ r:{ min:0, max:160, ticks:{stepSize:40,color:TK,backdropColor:'transparent',font:{size:10}}, grid:{color:GR}, pointLabels:{color:TK,font:{size:11}} } }
+  }
+});
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const sec = btn.dataset.section;
+    const map = { coo:'sec-coo', cmo:'sec-cmo', chro:'sec-chro', ceo:'sec-ceo', cfo:'sec-cfo', cso:'sec-cso' };
+    const dividers = document.querySelectorAll('.divider');
+    if (sec === 'all') {
+      document.querySelectorAll('.section').forEach(s => s.classList.add('visible'));
+      dividers.forEach(d => d.style.display = '');
+    } else {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+      dividers.forEach(d => d.style.display = 'none');
+      const el = document.getElementById(map[sec]);
+      if (el) el.classList.add('visible');
+    }
+  });
+});
+</script>
+</body>
+</html>
