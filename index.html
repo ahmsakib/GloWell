@@ -196,30 +196,74 @@ const PLAN = [
     'Morning: MilesDown review sheet (~2 hours)','CARS — 2–3 easy/medium passages only','Afternoon: review personal error log','Evening: stop studying — prep ID, snacks, water, clothes, caffeine','Go to bed early'
   ]},
   {id:'exam', num:'Exam Day', date:'Sep 11', title:'MCAT', tasks:[
-    'Execute, don\\'t learn — one passage at a time','Read → Understand → Eliminate → Answer → Move'
+    'Execute, don&#39;t learn — one passage at a time','Read → Understand → Eliminate → Answer → Move'
   ]},
 ];
 
 const FL_DAYS = ['d4','d8','d12','d16'];
 const STORAGE_KEY = 'mcat-tracker-state';
 let state = { tasks:{}, fl:{}, notes:{}, open:{} };
+let persistMode = 'none'; // 'storage' | 'local' | 'none'
 
-function saveState(){
-  window.storage.set(STORAGE_KEY, JSON.stringify(state), false).catch(()=>{});
+function showIndicator(text){
   const ind = document.getElementById('save-indicator');
+  ind.textContent = text;
   ind.classList.add('show');
   clearTimeout(window._saveTimeout);
-  window._saveTimeout = setTimeout(()=>ind.classList.remove('show'), 1200);
+  window._saveTimeout = setTimeout(()=>ind.classList.remove('show'), 1500);
+}
+
+function saveState(){
+  const json = JSON.stringify(state);
+  if(persistMode === 'storage'){
+    window.storage.set(STORAGE_KEY, json, false)
+      .then(()=>showIndicator('Saved'))
+      .catch(()=>{
+        // storage API failed at runtime — fall back to localStorage from now on
+        persistMode = 'local';
+        saveState();
+      });
+    return;
+  }
+  if(persistMode === 'local'){
+    try{
+      localStorage.setItem(STORAGE_KEY, json);
+      showIndicator('Saved (local)');
+    }catch(e){
+      persistMode = 'none';
+      showIndicator('Not saved — storage unavailable');
+    }
+    return;
+  }
+  showIndicator('Not saved — storage unavailable');
 }
 
 async function loadState(){
-  try{
-    const res = await window.storage.get(STORAGE_KEY, false);
-    if(res && res.value){
-      const parsed = JSON.parse(res.value);
-      state = Object.assign({tasks:{}, fl:{}, notes:{}, open:{}}, parsed);
+  // Try the artifact storage API first
+  if(window.storage && typeof window.storage.get === 'function'){
+    try{
+      const res = await window.storage.get(STORAGE_KEY, false);
+      if(res && res.value){
+        state = Object.assign({tasks:{}, fl:{}, notes:{}, open:{}}, JSON.parse(res.value));
+      }
+      persistMode = 'storage';
+      return;
+    }catch(e){
+      // key doesn't exist yet, or storage errored — still usable, just empty
+      persistMode = 'storage';
+      return;
     }
-  }catch(e){ /* no saved state yet */ }
+  }
+  // Fall back to localStorage (works when the file is opened directly in a browser)
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      state = Object.assign({tasks:{}, fl:{}, notes:{}, open:{}}, JSON.parse(raw));
+    }
+    persistMode = 'local';
+  }catch(e){
+    persistMode = 'none';
+  }
 }
 
 function render(){
